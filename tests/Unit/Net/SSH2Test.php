@@ -32,13 +32,13 @@ class Unit_Net_SSH2Test extends PhpseclibTestCase
     {
         $ssh = $this->createSSHMock();
 
-        $result = $ssh->_format_log($message_log, $message_number_log);
+        $result = self::callFunc($ssh, 'format_log', array($message_log, $message_number_log));
         $this->assertEquals($expected, $result);
     }
 
     public function testGenerateIdentifier()
     {
-        $identifier = $this->createSSHMock()->_generate_identifier();
+        $identifier = self::callFunc($this->createSSHMock(), 'generate_identifier');
         $this->assertStringStartsWith('SSH-2.0-phpseclib_2.0', $identifier);
 
         if (extension_loaded('libsodium')) {
@@ -108,6 +108,18 @@ class Unit_Net_SSH2Test extends PhpseclibTestCase
 
         $ssh->disableQuietMode();
         $this->assertFalse($ssh->isQuietModeEnabled());
+    }
+
+    public function testGetConnectionByResourceId()
+    {
+        $ssh = new \phpseclib\Net\SSH2('localhost');
+        $this->assertSame($ssh, \phpseclib\Net\SSH2::getConnectionByResourceId($ssh->getResourceId()));
+    }
+
+    public function testGetResourceId()
+    {
+        $ssh = new \phpseclib\Net\SSH2('localhost');
+        $this->assertSame('{' . spl_object_hash($ssh) . '}', $ssh->getResourceId());
     }
 
     /**

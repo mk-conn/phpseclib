@@ -43,7 +43,7 @@
 - Random: fix issues with serialize() (#932)
 - RC2: fix issue with decrypting
 - RC4: fix issue with key not being truncated correctly
-- SFTP: nlist() on a non-existant directory resulted in error
+- SFTP: nlist() on a non-existent directory resulted in error
 - SFTP: add is_writable, is_writeable, is_readable
 - X509: add IPv6 support for subjectaltname extension (#936)
 

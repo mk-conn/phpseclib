@@ -5,7 +5,7 @@
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
  */
 
-use phpseclib\Crypt\Base;
+use phpseclib\Crypt\Common\BlockCipher;
 use phpseclib\Crypt\Twofish;
 
 class Unit_Crypt_TwofishTest extends PhpseclibTestCase
@@ -13,13 +13,15 @@ class Unit_Crypt_TwofishTest extends PhpseclibTestCase
     public function testVectors()
     {
         $engines = array(
-            Base::ENGINE_INTERNAL => 'internal',
-            Base::ENGINE_MCRYPT => 'mcrypt',
-            Base::ENGINE_OPENSSL => 'OpenSSL',
+            BlockCipher::ENGINE_INTERNAL => 'internal',
+            BlockCipher::ENGINE_EVAL => 'eval',
+            BlockCipher::ENGINE_MCRYPT => 'mcrypt',
+            BlockCipher::ENGINE_OPENSSL => 'OpenSSL',
         );
 
         foreach ($engines as $engine => $name) {
-            $tf = new Twofish();
+            $tf = new Twofish(Twofish::MODE_CBC);
+            $tf->setIV(str_repeat("\0", $tf->getBlockLength() >> 3));
             $tf->disablePadding();
 
             // tests from https://www.schneier.com/code/ecb_ival.txt

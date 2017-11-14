@@ -5,7 +5,7 @@
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
  */
 
-use phpseclib\Crypt\Base;
+use phpseclib\Crypt\Common\BlockCipher;
 use phpseclib\Crypt\Blowfish;
 use phpseclib\Crypt\Random;
 
@@ -14,9 +14,10 @@ class Unit_Crypt_BlowfishTest extends PhpseclibTestCase
     public function engineVectors()
     {
         $engines = array(
-            Base::ENGINE_INTERNAL => 'internal',
-            Base::ENGINE_MCRYPT => 'mcrypt',
-            Base::ENGINE_OPENSSL => 'OpenSSL',
+            BlockCipher::ENGINE_INTERNAL => 'internal',
+            BlockCipher::ENGINE_EVAL => 'eval',
+            BlockCipher::ENGINE_MCRYPT => 'mcrypt',
+            BlockCipher::ENGINE_OPENSSL => 'OpenSSL',
         );
 
         // tests from https://www.schneier.com/code/vectors.txt
@@ -74,8 +75,9 @@ class Unit_Crypt_BlowfishTest extends PhpseclibTestCase
      */
     public function testVectors($engine, $engineName, $key, $plaintext, $expected)
     {
-        $bf = new Blowfish();
+        $bf = new Blowfish(Blowfish::MODE_CBC);
         $bf->setKey($key);
+        $bf->setIV(str_repeat("\0", $bf->getBlockLength() >> 3));
         if (!$bf->isValidEngine($engine)) {
             self::markTestSkipped('Unable to initialize ' . $engineName . ' engine');
         }
@@ -89,21 +91,21 @@ class Unit_Crypt_BlowfishTest extends PhpseclibTestCase
     public function testKeySizes()
     {
         $objects = $engines = array();
-        $temp = new Blowfish(Base::MODE_CTR);
-        $temp->setPreferredEngine(Base::ENGINE_INTERNAL);
+        $temp = new Blowfish(Blowfish::MODE_CTR);
+        $temp->setPreferredEngine(Blowfish::ENGINE_INTERNAL);
         $objects[] = $temp;
         $engines[] = 'internal';
 
-        if ($temp->isValidEngine(Base::ENGINE_MCRYPT)) {
-            $temp = new Blowfish(Base::MODE_CTR);
-            $temp->setPreferredEngine(Base::ENGINE_MCRYPT);
+        if ($temp->isValidEngine(Blowfish::ENGINE_MCRYPT)) {
+            $temp = new Blowfish(Blowfish::MODE_CTR);
+            $temp->setPreferredEngine(Blowfish::ENGINE_MCRYPT);
             $objects[] = $temp;
             $engines[] = 'mcrypt';
         }
 
-        if ($temp->isValidEngine(Base::ENGINE_OPENSSL)) {
-            $temp = new Blowfish(Base::MODE_CTR);
-            $temp->setPreferredEngine(Base::ENGINE_OPENSSL);
+        if ($temp->isValidEngine(Blowfish::ENGINE_OPENSSL)) {
+            $temp = new Blowfish(Blowfish::MODE_CTR);
+            $temp->setPreferredEngine(Blowfish::ENGINE_OPENSSL);
             $objects[] = $temp;
             $engines[] = 'OpenSSL';
         }

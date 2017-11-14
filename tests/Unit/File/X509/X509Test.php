@@ -107,7 +107,7 @@ k6m17mi63YW/+iPCGOWZ2qXmY5HPEyyF2L4L4IDryFJ+8xLyw3pH9/yp5aHZDtp6
 
         $cert = $x509->loadX509($test);
 
-        $this->assertEquals('MDUwDgYIKoZIhvcNAwICAgCAMA4GCCqGSIb3DQMEAgIAgDAHBgUrDgMCBzAKBggqhkiG9w0DBw==', $cert['tbsCertificate']['extensions'][8]['extnValue']);
+        $this->assertEquals(base64_decode('MDUwDgYIKoZIhvcNAwICAgCAMA4GCCqGSIb3DQMEAgIAgDAHBgUrDgMCBzAKBggqhkiG9w0DBw=='), $cert['tbsCertificate']['extensions'][8]['extnValue']);
     }
 
     public function testSaveUnsupportedExtension()
@@ -133,13 +133,11 @@ ulvKGQSy068Bsn5fFNum21K5mvMSf3yinDtvmX3qUA12IxL/92ZzKbeVCq3Yi7Le
 IOkKcGQRCMha8X2e7GmlpdWC1ycenlbN0nbVeSv3JUMcafC4+Q==
 -----END CERTIFICATE-----');
 
-        $asn1 = new ASN1();
-
         $value = $this->_encodeOID('1.2.3.4');
-        $ext = chr(ASN1::TYPE_OBJECT_IDENTIFIER) . $asn1->_encodeLength(strlen($value)) . $value;
+        $ext = chr(ASN1::TYPE_OBJECT_IDENTIFIER) . ASN1::encodeLength(strlen($value)) . $value;
         $value = 'zzzzzzzzz';
-        $ext.= chr(ASN1::TYPE_OCTET_STRING) . $asn1->_encodeLength(strlen($value)) . $value;
-        $ext = chr(ASN1::TYPE_SEQUENCE | 0x20) . $asn1->_encodeLength(strlen($ext)) . $ext;
+        $ext.= chr(ASN1::TYPE_OCTET_STRING) . ASN1::encodeLength(strlen($value)) . $value;
+        $ext = chr(ASN1::TYPE_SEQUENCE | 0x20) . ASN1::encodeLength(strlen($ext)) . $ext;
 
         $cert['tbsCertificate']['extensions'][4] = new Element($ext);
 
@@ -154,7 +152,7 @@ IOkKcGQRCMha8X2e7GmlpdWC1ycenlbN0nbVeSv3JUMcafC4+Q==
     public function testSaveNullRSAParam()
     {
         $privKey = new RSA();
-        $privKey->loadKey('-----BEGIN RSA PRIVATE KEY-----
+        $privKey->load('-----BEGIN RSA PRIVATE KEY-----
 MIICXQIBAAKBgQDMswfEpAgnUDWA74zZw5XcPsWh1ly1Vk99tsqwoFDkLF7jvXy1
 dDLHYfuquvfxCgcp8k/4fQhx4ubR8bbGgEq9B05YRnViK0R0iBB5Ui4IaxWYYhKE
 8xqAEH2fL+/7nsqqNFKkEN9KeFwc7WbMY49U2adlMrpBdRjk1DqIEW3QTwIDAQAB
@@ -171,7 +169,7 @@ aBtsWpliLSex/HHhtRW9AkBGcq67zKmEpJ9kXcYLEjJii3flFS+Ct/rNm+Hhm1l7
 -----END RSA PRIVATE KEY-----');
 
         $pubKey = new RSA();
-        $pubKey->loadKey($privKey->getPublicKey());
+        $pubKey->load($privKey->getPublicKey());
         $pubKey->setPublicKey();
 
         $subject = new X509();
@@ -220,10 +218,11 @@ aBtsWpliLSex/HHhtRW9AkBGcq67zKmEpJ9kXcYLEjJii3flFS+Ct/rNm+Hhm1l7
 
     public function testGetOID()
     {
-        $x509 = new X509();
-        $this->assertEquals($x509->getOID('2.16.840.1.101.3.4.2.1'), '2.16.840.1.101.3.4.2.1');
-        $this->assertEquals($x509->getOID('id-sha256'), '2.16.840.1.101.3.4.2.1');
-        $this->assertEquals($x509->getOID('zzz'), 'zzz');
+        // load the OIDs
+        new X509();
+        $this->assertEquals(ASN1::getOID('2.16.840.1.101.3.4.2.1'), '2.16.840.1.101.3.4.2.1');
+        $this->assertEquals(ASN1::getOID('id-sha256'), '2.16.840.1.101.3.4.2.1');
+        $this->assertEquals(ASN1::getOID('zzz'), 'zzz');
     }
 
     public function testIPAddressSubjectAltNamesDecoding()
@@ -458,23 +457,15 @@ Mj93S
     // fixed by #1104
     public function testMultipleDomainNames()
     {
-        $keyGenerator = new RSA();
-        $keys = $keyGenerator->createKey(512);
-
-        $privateKey = new RSA();
-        $privateKey->loadKey($keys['privatekey']);
-
-        $publicKey = new RSA();
-        $publicKey->loadKey($keys['publickey']);
-        $publicKey->setPublicKey();
+        extract(RSA::createKey(512));
 
         $subject = new X509();
         $subject->setDomain('example.com', 'example.net');
 
-        $subject->setPublicKey($publicKey);
+        $subject->setPublicKey($publickey);
 
         $issuer = new X509();
-        $issuer->setPrivateKey($privateKey);
+        $issuer->setPrivateKey($privatekey);
         $issuer->setDN($subject->getDN());
 
         $x509 = new X509();
